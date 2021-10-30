@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Country = ({ country }) => {
+const Country = ({ country, weather }) => {
   return (
     <div>
       <h2>{country.name.common}</h2> <div>capitial {country.capital}</div>
@@ -12,6 +12,14 @@ const Country = ({ country }) => {
         })}
       </ul>
       <img src={country.flags.png} alt='flag' />
+      {Object.keys(weather).length > 0 && (
+        <div>
+          <h2>weather in {country.capital}</h2>
+          <div>temperature: {weather.main.temp} C</div>
+          <div>wind: {weather.wind.speed}</div>
+          <div>Summary: {weather.weather.description}</div>
+        </div>
+      )}
     </div>
   );
 };
