@@ -73,7 +73,6 @@ const App = () => {
         });
     }
   };
-  //const country = countries.length === 1 ? countries[0] : '';
 
   return (
     <div className='App'>
