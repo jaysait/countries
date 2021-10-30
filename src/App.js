@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import axios from 'axios';
 import Country from './components/Country';
 
 const App = () => {
+  const WEATHER_API = process.env.REACT_APP_OPEN_WEATHER_API_KEY;
   const [countries, setCountries] = useState([]);
+  const [country, setCountry] = useState({});
+  const [weather, setWeather] = useState({});
 
   const findCountry = (event) => {
     event.preventDefault();
@@ -22,7 +25,7 @@ const App = () => {
           setCountries(sorted);
         })
         .catch((error) => {
-          console.error('error: ', error.message);
+          console.error(`error getting countries for ${event.target.value}: `, error.message);
           setCountries([]);
         });
     } else {
@@ -30,21 +33,67 @@ const App = () => {
     }
   };
 
+  useEffect(() => {
+    if (countries.length === 1) {
+      setCountry(countries[0]);
+    } else {
+      setCountry({});
+    }
+  }, [countries]);
+  const handleCountryClick = (event) => {
+    event.preventDefault();
+
+    axios
+      .get(
+        `https://restcountries.com/v3.1/alpha/${event.target.value}?fields=name,capital,flags,cioc,population,languages`
+      )
+      .then((response) => {
+        const country = response.data;
+
+        setCountry(country);
+      })
+      .catch((error) => {
+        console.error(`error retrieving country code ${event.target.value}: `, error.message);
+        setCountry({});
+      });
+
+    if (Object.keys(country).length > 0) {
+      axios
+        .get(
+          `https://api.openweathermap.org/data/2.5/weather?q=${country.capital}&appid=${WEATHER_API}&units=imperial`
+        )
+        .then((response) => {
+          const weather = response.data;
+          console.log('weather: ', weather);
+          setWeather(weather);
+        })
+        .catch((error) => {
+          console.error(`error retrieving country code ${event.target.value}: `, error.message);
+          setWeather({});
+        });
+    }
+  };
+  //const country = countries.length === 1 ? countries[0] : '';
+
   return (
     <div className='App'>
       <form>
         find countries <input type='text' onChange={findCountry} />
       </form>
+      {countries.length > 9
+        ? 'Too many matches, specify another filter'
+        : countries.map((c) => {
+            return (
+              <div key={c.cioc}>
+                {c.name.common}
+                <button onClick={handleCountryClick} value={c.cioc}>
+                  show
+                </button>
+              </div>
+            );
+          })}
 
-      {countries.length > 9 ? (
-        'Too many matches, specify another filter'
-      ) : countries.length === 1 ? (
-        <Country country={countries[0]} />
-      ) : (
-        countries.map((country) => {
-          return <div key={country.cioc}>{country.name.common}</div>;
-        })
-      )}
+      {Object.keys(country).length === 0 || <Country country={country} weather={weather} />}
     </div>
   );
 };
